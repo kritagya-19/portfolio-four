@@ -49,7 +49,9 @@ export function ArcRevealHero({
   const pathname = usePathname();
   const lenis = useLenis();
 
-  const [phase, setPhase] = React.useState<PreloadPhase>("intro");
+  const [phase, setPhase] = React.useState<PreloadPhase>(() => {
+    return pathname === '/' ? 'done' : 'intro';
+  });
   const [index, setIndex] = React.useState(0);
   const [prevPathname, setPrevPathname] = React.useState(pathname);
 
@@ -64,13 +66,16 @@ export function ArcRevealHero({
   if (pathname !== prevPathname) {
     const isBackToProjects = prevPathname.startsWith('/projects/') && pathname === '/projects';
     const isBackToBlog = prevPathname.startsWith('/blog/') && pathname === '/blog';
+    const isNavigatingToHome = pathname === '/';
     setPrevPathname(pathname);
     
-    // Skip preloader if navigating back to the main listing page from a detail page
-    if (!isBackToProjects && !isBackToBlog) {
+    // Skip preloader if navigating back to home or main listing page
+    if (!isBackToProjects && !isBackToBlog && !isNavigatingToHome) {
         setPhase("intro");
         setIndex(0);
         progress.set(0);
+    } else if (isNavigatingToHome) {
+        setPhase("done");
     }
   }
 
@@ -159,13 +164,10 @@ export function ArcRevealHero({
 
   // Check initial load overrides
   React.useEffect(() => {
-    // For homepage first load, if the original hello loader will run, skip this one
-    if (pathname === '/' && typeof window !== 'undefined') {
-        const isLoaded = sessionStorage.getItem('portfolioLoaded');
-        if (!isLoaded) {
-            setPhase("done");
-            return;
-        }
+    // For homepage, the multilingual "Hello" LoadingScreen handles initial load & reloads
+    if (pathname === '/') {
+        setPhase("done");
+        return;
     }
 
     if (storageKey && typeof window !== "undefined") {

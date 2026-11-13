@@ -4,7 +4,6 @@ import React, { useRef } from "react";
 import { motion, useTransform, useSpring, easeOut, easeInOut, circOut, useMotionValueEvent } from "framer-motion";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 import { portfolioData } from "@/data/portfolio";
 import { InfiniteMarquee } from "@/components/ui/InfiniteMarquee";
 import { BrandScroller, BrandScrollerReverse } from "@/components/ui/brand-scroller";
@@ -83,30 +82,8 @@ export const IdentitySequence = ({ scrollYProgress, isVisible }: IdentitySequenc
         }
     });
 
-    // 4. Background Color Transition (Smoothing the exit)
-    const cardBg = useTransform(
-        localProgress,
-        [0.8, 1],
-        ["#EBEBEB", "#FFFFFF"]
-    );
-    const cardBgDark = useTransform(
-        localProgress,
-        [0.8, 1],
-        ["#18181b", "#000000"]
-    );
-
-    const { resolvedTheme } = useTheme();
-    const cardBgValue = resolvedTheme === 'dark' ? cardBgDark : cardBg;
-
-    // Dynamic vault frame gradients that always match the card's transitioning background
-    const vaultGradientDown = useTransform(cardBgValue, (color: string) => {
-        const hex = color.replace('#', '');
-        return `linear-gradient(to bottom, #${hex}, #${hex}00)`;
-    });
-    const vaultGradientUp = useTransform(cardBgValue, (color: string) => {
-        const hex = color.replace('#', '');
-        return `linear-gradient(to top, #${hex}, #${hex}00)`;
-    });
+    // 4. Background Color Transition (Smoothing the exit via overlay opacity)
+    const exitOverlayOpacity = useTransform(localProgress, [0.8, 1], [0, 1]);
 
     const marqueeItems = [
         <span key="1" className="text-[10rem] md:text-[16rem] font-black uppercase tracking-tighter mx-12 text-black dark:text-white leading-none">
@@ -180,15 +157,20 @@ export const IdentitySequence = ({ scrollYProgress, isVisible }: IdentitySequenc
                     scale: cardScale,
                     y: cardY,
                     borderRadius: cardBorderRadius,
-                    backgroundColor: cardBgValue,
-                    willChange: "transform, background-color",
+                    willChange: "transform",
                 }}
-                className="relative w-full h-full flex flex-col overflow-hidden origin-bottom z-10"
+                className="relative w-full h-full flex flex-col overflow-hidden origin-bottom z-10 bg-[#EBEBEB] dark:bg-[#18181b]"
             >
+                {/* Exit background smoothing overlay */}
+                <motion.div
+                    style={{ opacity: exitOverlayOpacity }}
+                    className="absolute inset-0 bg-white dark:bg-black pointer-events-none z-0"
+                />
+
                 {/* Unified Scrolling Content Wrapper */}
                 <motion.div
                     style={{ y: contentY }}
-                    className="relative w-full flex flex-col items-center"
+                    className="relative w-full flex flex-col items-center z-10"
                 >
                     {/* Phase 1: Marquee Header (Top of the long card) */}
                     <div className="w-full h-screen flex items-center justify-center flex-shrink-0">
@@ -246,12 +228,20 @@ export const IdentitySequence = ({ scrollYProgress, isVisible }: IdentitySequenc
                             {/* Vault frame - OUTSIDE overflow-hidden, extends 1px beyond clip edge to cover it */}
                             <div className="absolute inset-0 pointer-events-none z-20">
                                 {/* Top bar: -top-px + h-[52px] covers the clip edge by 1px */}
-                                <motion.div style={{ backgroundColor: cardBgValue }} className="absolute -top-px left-0 w-full h-[52px]" />
-                                <motion.div style={{ background: vaultGradientDown }} className="absolute top-[50px] left-0 w-full h-32" />
+                                <div className="absolute -top-px left-0 w-full h-[52px] bg-[#EBEBEB] dark:bg-[#18181b] overflow-hidden">
+                                    <motion.div style={{ opacity: exitOverlayOpacity }} className="w-full h-full bg-white dark:bg-black" />
+                                </div>
+                                <div className="absolute top-[50px] left-0 w-full h-32 bg-gradient-to-b from-[#EBEBEB] to-transparent dark:from-[#18181b] dark:to-transparent overflow-hidden">
+                                    <motion.div style={{ opacity: exitOverlayOpacity }} className="w-full h-full bg-gradient-to-b from-white to-transparent dark:from-black dark:to-transparent" />
+                                </div>
                                 
                                 {/* Bottom bar: -bottom-px + h-[52px] covers the clip edge by 1px */}
-                                <motion.div style={{ backgroundColor: cardBgValue }} className="absolute -bottom-px left-0 w-full h-[52px]" />
-                                <motion.div style={{ background: vaultGradientUp }} className="absolute bottom-[50px] left-0 w-full h-32" />
+                                <div className="absolute -bottom-px left-0 w-full h-[52px] bg-[#EBEBEB] dark:bg-[#18181b] overflow-hidden">
+                                    <motion.div style={{ opacity: exitOverlayOpacity }} className="w-full h-full bg-white dark:bg-black" />
+                                </div>
+                                <div className="absolute bottom-[50px] left-0 w-full h-32 bg-gradient-to-t from-[#EBEBEB] to-transparent dark:from-[#18181b] dark:to-transparent overflow-hidden">
+                                    <motion.div style={{ opacity: exitOverlayOpacity }} className="w-full h-full bg-gradient-to-t from-white to-transparent dark:from-black dark:to-transparent" />
+                                </div>
                             </div>
                         </div>
                     </div>

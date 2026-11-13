@@ -90,7 +90,7 @@ const CenterImage = ({ scrollY }: { scrollY: MotionValue<number> }) => {
                     opacity,
                     backgroundImage:
                         "url('/experience/Foto Utama.webp')",
-                    backgroundPosition: "center",
+                    backgroundPosition: "center 20%",
                     backgroundSize: "cover",
                     backgroundRepeat: "no-repeat",
                 }}

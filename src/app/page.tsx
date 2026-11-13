@@ -58,15 +58,8 @@ export default function HomePage() {
     const { phase } = usePreloadState();
     const [isLoading, setIsLoading] = useState(true);
     const [isInitialLoadingExit, setIsInitialLoadingExit] = useState(false);
-    const [skipAnimation, setSkipAnimation] = useState(false);
 
     useEffect(() => {
-        const hasLoaded = sessionStorage.getItem('portfolioLoaded');
-        if (hasLoaded) {
-            setSkipAnimation(true);
-            setIsLoading(false);
-        }
-
         if (typeof window === 'undefined' || !('ResizeObserver' in window)) return;
         const refreshLayout = () => {
             window.dispatchEvent(new Event('resize'));
@@ -82,8 +75,8 @@ export default function HomePage() {
         };
     }, []);
 
-    // Animasikan konten saat LoadingScreen selesai (visit pertama) 
-    // ATAU saat arc preloader mulai naik/selesai (visit kedua dst)
+    // Animate content when LoadingScreen exits (every reload/visit)
+    // or when route preloader completes
     const isReadyToAnimate = isLoading ? isInitialLoadingExit : (phase === "reveal" || phase === "done");
 
     useEffect(() => {
@@ -98,7 +91,6 @@ export default function HomePage() {
     const handleLoadingComplete = () => {
         setIsLoading(false);
         window.scrollTo({ top: 0, behavior: 'instant' });
-        sessionStorage.setItem('portfolioLoaded', 'true');
         setTimeout(() => { ScrollTrigger.refresh(); }, 100);
     };
 
@@ -110,12 +102,12 @@ export default function HomePage() {
         <>
             {isLoading && <LoadingScreen onComplete={handleLoadingComplete} onExitStart={handleExitStart} duration={2500} />}
             <motion.main
-                initial={skipAnimation ? false : { opacity: 0, y: 40 }}
-                animate={skipAnimation ? { opacity: 1, y: 0 } : (isReadyToAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 })}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isReadyToAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                 transition={{
-                    duration: skipAnimation ? 0 : 1.4,
-                    ease: skipAnimation ? "linear" : [0.16, 1, 0.3, 1], // Expo out for snappy yet smooth feel
-                    opacity: { duration: skipAnimation ? 0 : 0.8 }
+                    duration: 1.4,
+                    ease: [0.16, 1, 0.3, 1], // Expo out for snappy yet smooth feel
+                    opacity: { duration: 0.8 }
                 }}
                 className="relative overflow-x-clip will-change-transform will-change-opacity"
             >
